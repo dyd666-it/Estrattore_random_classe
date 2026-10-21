@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estrattore Numeri Casuali</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a2e; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: #16213e; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; max-width: 450px; width: 100%; box-sizing: border-box; border: 1px solid #0f3460; }
+        h1 { color: #ffffff; margin-top: 0; margin-bottom: 25px; font-size: 28px; display: flex; align-items: center; justify-content: center; }
+        .mode-selector { display: flex; justify-content: space-around; margin-bottom: 25px; gap: 10px; }
+        .mode-btn { background: #0f3460; border: 1px solid #1f4068; color: #b0b0b0; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; flex: 1; font-size: 16px; }
+        .mode-btn.active { background: #e94560; color: white; border-color: #e94560; box-shadow: 0 0 15px rgba(233, 69, 96, 0.4); }
+        .input-group { margin-bottom: 25px; display: none; }
+        .input-group.active { display: block; }
+        label { display: block; margin-bottom: 12px; font-weight: bold; color: #b0b0b0; font-size: 15px; }
+        input { width: 80%; padding: 14px; border: 2px solid #0f3460; background: #1a1a2e; color: white; border-radius: 8px; font-size: 20px; text-align: center; outline: none; transition: 0.2s; }
+        input:focus { border-color: #e94560; }
+        .action-btn { background: #00b4d8; color: white; border: none; padding: 16px; border-radius: 8px; font-size: 22px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; box-shadow: 0 4px 15px rgba(0, 180, 216, 0.3); }
+        .action-btn:hover { background: #0077b6; transform: translateY(-1px); }
+        #result { font-size: 96px; font-weight: bold; color: #00b4d8; margin: 20px 0; min-height: 120px; display: flex; align-items: center; justify-content: center; text-shadow: 0 0 20px rgba(0, 180, 216, 0.5); }
+        .history-container { text-align: left; margin-top: 25px; border-top: 1px solid #0f3460; padding-top: 20px; }
+        .history { background: #1a1a2e; border: 1px solid #0f3460; padding: 14px; border-radius: 8px; min-height: 45px; max-height: 90px; overflow-y: auto; font-size: 16px; color: #e0e0e0; word-wrap: break-word; line-height: 1.5; }
+        .reset-link { font-size: 13px; color: #e94560; cursor: pointer; text-decoration: underline; float: right; margin-top: 2px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎲 Estrattore Numeri</h1>
+
+    <div class="mode-selector">
+        <button id="btn-qty" class="mode-btn active" onclick="setMode('qty')">Quantit&agrave; Totale</button>
+        <button id="btn-range" class="mode-btn" onclick="setMode('range')">Min / Max</button>
+    </div>
+
+    <!-- Modalità Quantità -->
+    <div id="group-qty" class="input-group active">
+        <label for="qty-input">Estrai dal paniere (da 1 a N):</label>
+        <input type="number" id="qty-input" value="50" min="1" onchange="resetPaniere()">
+    </div>
+
+    <!-- Modalità Intervallo -->
+    <div id="group-range" class="input-group">
+        <label>Inserisci l'intervallo di numeri:</label>
+        <div style="display: flex; justify-content: center; gap: 15px; width: 100%;">
+            <input type="number" id="min-input" value="1" placeholder="Min" style="width: 40%;" onchange="resetPaniere()">
+            <input type="number" id="max-input" value="30" placeholder="Max" style="width: 40%;" onchange="resetPaniere()">
+        </div>
+    </div>
+
+    <button class="action-btn" onclick="estraiNumero()">ESTRAI</button>
+
+    <div id="result">-</div>
+
+    <div class="history-container">
+        <span class="reset-link" onclick="resetPaniere()">Azzera paniere</span>
+        <strong>Estratti finora:</strong>
+        <div id="history-box" class="history">Nessuno</div>
+    </div>
+</div>
+
+<script>
+    let currentMode = 'qty';
+    let estratti = [];
+
+    function setMode(mode) {
+        currentMode = mode;
+
+        document.getElementById('btn-qty').classList.remove('active');
+        document.getElementById('btn-range').classList.remove('active');
+        document.getElementById('btn-' + mode).classList.add('active');
+
+        document.getElementById('group-qty').classList.remove('active');
+        document.getElementById('group-range').classList.remove('active');
+        document.getElementById('group-' + mode).classList.add('active');
+
+        resetPaniere();
+    }
+
+    function resetPaniere() {
+        estratti = [];
+        document.getElementById('history-box').innerText = "Nessuno";
+        document.getElementById('result').innerText = "-";
+        document.getElementById('result').style.color = "#00b4d8";
+        document.getElementById('result').style.textShadow = "0 0 20px rgba(0, 180, 216, 0.5)";
+    }
+
+    function estraiNumero() {
+        let min, max;
+
+        if (currentMode === 'qty') {
+            min = 1;
+            max = parseInt(document.getElementById('qty-input').value);
+        } else {
+            min = parseInt(document.getElementById('min-input').value);
+            max = parseInt(document.getElementById('max-input').value);
+        }
+
+        if (isNaN(min) || isNaN(max) || min > max) {
+            alert("Inserisci valori validi. Il valore minimo deve essere inferiore o uguale al massimo.");
+            return;
+        }
+
+        let disponibili = [];
+        for (let i = min; i <= max; i++) {
+            if (!estratti.includes(i)) {
+                disponibili.push(i);
+            }
+        }
+
+        if (disponibili.length === 0) {
+            alert("Tutti i numeri in questo paniere sono già stati estratti! Il paniere verrà azzerato automaticamente.");
+            resetPaniere();
+            return;
+        }
+
+        let resultDiv = document.getElementById('result');
+        resultDiv.style.color = "#b0b0b0";
+        resultDiv.style.textShadow = "none";
+        let counter = 0;
+
+        let interval = setInterval(() => {
+            let numeroCasualeAnimazione = Math.floor(Math.random() * (max - min + 1)) + min;
+            resultDiv.innerText = numeroCasualeAnimazione;
+            counter++;
+
+            if (counter > 12) {
+                clearInterval(interval);
+
+                let indiceCasuale = Math.floor(Math.random() * disponibili.length);
+                let numeroEstratto = disponibili[indiceCasuale];
+
+                estratti.push(numeroEstratto);
+                resultDiv.style.color = "#e94560";
+                resultDiv.style.textShadow = "0 0 20px rgba(233, 69, 96, 0.6)";
+                resultDiv.innerText = numeroEstratto;
+
+                document.getElementById('history-box').innerText = estratti.join(', ');
+            }
+        }, 50);
+    }
+</script>
+<script>
+    // Collega il file manifest per l'installazione
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = 'manifest.json';
+    document.head.appendChild(link);
+
+    // Attiva il Service Worker per il funzionamento offline
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registrato con successo!'))
+                .catch(err => console.log('Errore registrazione Service Worker:', err));
+        });
+    }
+</script>
+</body>
+</html>
